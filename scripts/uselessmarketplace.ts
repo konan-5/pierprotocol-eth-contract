@@ -6,8 +6,8 @@ async function main() {
 
   const lockedAmount = ethers.parseEther("0.001");
 
-  const uselessMarketplace = await ethers.getContractAt("UselessMarketplace", "0x304fc982dA58D1290E314F1Dc96C66316fA32638")
-  const wethAddress = await uselessMarketplace.WETH()
+  const pierMarketplace = await ethers.getContractAt("PierMarketplace", "0x304fc982dA58D1290E314F1Dc96C66316fA32638")
+  const wethAddress = await pierMarketplace.WETH()
   console.log(wethAddress)
 }
 

@@ -2,14 +2,14 @@ import { ethers } from 'hardhat';
 import { expect } from 'chai';
 import { Contract, Signer } from 'ethers';
 
-describe('UselessMarketplace', function () {
+describe('PierMarketplace', function () {
   let owner: Signer;
   let addr1: Signer;
   let addr2: Signer;
-  let uselessToken: Contract;
+  let pierToken: Contract;
   let paymentToken: Contract;
   let otherToken: Contract;
-  let uselessMarketplace: any;
+  let pierMarketplace: any;
 
   const provider = ethers.provider;
 
@@ -18,12 +18,12 @@ describe('UselessMarketplace', function () {
 
     console.log(owner, addr1, addr2);
     
-    // Deploy mock tokens (uselessToken, paymentToken, etc.) here
+    // Deploy mock tokens (pierToken, paymentToken, etc.) here
     // ...
 
-    const UselessMarketplace = await ethers.getContractFactory('UselessMarketplace');
-    uselessMarketplace = await UselessMarketplace.deploy(
-      "uselessToken.address", 
+    const PierMarketplace = await ethers.getContractFactory('PierMarketplace');
+    pierMarketplace = await PierMarketplace.deploy(
+      "pierToken.address", 
       await owner.getAddress(), 
       await owner.getAddress(), 
       "paymentToken.address"
@@ -32,7 +32,7 @@ describe('UselessMarketplace', function () {
 
   describe('Deployment', () => {
     it('Should set the right owner', async () => {
-      expect(await uselessMarketplace.owner()).to.equal(await owner.getAddress());
+      expect(await pierMarketplace.owner()).to.equal(await owner.getAddress());
     });
 
     // Additional deployment tests...
@@ -43,8 +43,8 @@ describe('UselessMarketplace', function () {
       // Setup for listing a token, like minting and approving
       // ...
 
-      await expect(uselessMarketplace.connect(addr1).listTokenForSale(/* args */))
-        .to.emit(uselessMarketplace, 'TokenListed');
+      await expect(pierMarketplace.connect(addr1).listTokenForSale(/* args */))
+        .to.emit(pierMarketplace, 'TokenListed');
         // Check emitted event arguments
     });
 
@@ -52,7 +52,7 @@ describe('UselessMarketplace', function () {
       // Setup
       // ...
 
-      await expect(uselessMarketplace.connect(addr1).listTokenForSale(/* args with zero amount */))
+      await expect(pierMarketplace.connect(addr1).listTokenForSale(/* args with zero amount */))
         .to.be.revertedWith('AmountMustBeGreaterThanZero');
     });
 
