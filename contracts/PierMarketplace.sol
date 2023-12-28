@@ -36,9 +36,9 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
     uint256 public wtsListingCount = 0;
     uint256 public wtbListingCount = 0;
 
-    address payable public uselessStaking; // 50% fees go to staking contract
-    address payable public uselessWallet; // 50% fees go to wallet
-    IERC20 public uselessToken;
+    address payable public pierStaking; // 50% fees go to staking contract
+    address payable public pierWallet; // 50% fees go to wallet
+    IERC20 public pierToken;
     IWETH public WETH; // WETH Contract
 
     //mapping of all listings
@@ -76,10 +76,10 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
     error InsufficientAllowanceForPaymentToken(uint256 paymentTokenAllowance);
     error InsufficientBalance(uint256 buyerBalance);
 
-    constructor(address _uselessToken, address payable _uselessStaking, address payable _uselessWallet, address _wethAddress) Ownable(msg.sender) {
-        uselessToken = IERC20(_uselessToken);
-        uselessStaking = _uselessStaking;
-        uselessWallet = _uselessWallet;
+    constructor(address _pierToken, address payable _pierStaking, address payable _pierWallet, address _wethAddress) Ownable(msg.sender) {
+        pierToken = IERC20(_pierToken);
+        pierStaking = _pierStaking;
+        pierWallet = _pierWallet;
         WETH = IWETH(_wethAddress);
     }
 
@@ -257,18 +257,18 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
 
 
     //Allows the owner to set a new staking address
-    function setUselessStaking(address payable _uselessStaking) external onlyOwner {
-        uselessStaking = _uselessStaking;
+    function setPierStaking(address payable _pierStaking) external onlyOwner {
+        pierStaking = _pierStaking;
     }
 
     //Allows the owner to set a new wallet address
-    function setUselessWallet(address payable _uselessWallet) external onlyOwner {
-        uselessWallet = _uselessWallet;
+    function setPierWallet(address payable _pierWallet) external onlyOwner {
+        pierWallet = _pierWallet;
     }
 
-    //Allows the owner to set a new useless token
-    function setUselessToken(address _uselessToken) external onlyOwner {
-        uselessToken = IERC20(_uselessToken);
+    //Allows the owner to set a new pier token
+    function setPierToken(address _pierToken) external onlyOwner {
+        pierToken = IERC20(_pierToken);
     }
 
     //Add an address to the blacklist
@@ -284,8 +284,8 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
     /* INTERNAL FUNCTIONS */
 
     function _calculateFee(uint256 amount, address tokenAddress) internal view returns (uint256, uint256) {
-        // If the token being transacted is uselessToken, return zero fees
-        if (tokenAddress == address(uselessToken)) {
+        // If the token being transacted is pierToken, return zero fees
+        if (tokenAddress == address(pierToken)) {
             return (0, 0);
         }
 
@@ -303,8 +303,8 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         WETH.withdraw(feeForStaking + feeForWallet);
 
         // Send the specific fee portions to staking and wallet
-        _sendETH(uselessStaking, feeForStaking);
-        _sendETH(uselessWallet, feeForWallet);
+        _sendETH(pierStaking, feeForStaking);
+        _sendETH(pierWallet, feeForWallet);
     }
 
     function _sendETH(address payable recipient, uint256 amount) internal {
