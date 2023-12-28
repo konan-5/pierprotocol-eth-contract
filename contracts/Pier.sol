@@ -318,7 +318,7 @@ abstract contract ERC20 is Context, IERC20, IERC20Metadata, IERC20Errors {
     }
 }
 
-contract UselessUtility is ERC20, Ownable {
+contract Pier is ERC20, Ownable {
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public uniswapV2Pair;
     address public constant deadAddress = address(0xdead);
@@ -376,7 +376,7 @@ contract UselessUtility is ERC20, Ownable {
         address indexed oldWallet
     );
 
-    constructor() ERC20("Useless Utility", unicode"UU") Ownable(msg.sender) {
+    constructor() ERC20("PIER PROTOCOL", unicode"PIER") Ownable(msg.sender) {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
         excludeFromMaxTransaction(address(_uniswapV2Router), true);

@@ -11,7 +11,7 @@ interface IWETH {
     function withdraw(uint256 amount) external;
 }
 
-contract UselessMarketplace is Ownable, ReentrancyGuard {
+contract PierMarketplace is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct WTSListing {

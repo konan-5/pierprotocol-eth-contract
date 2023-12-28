@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/IUUStaking.sol";
 
-contract UUStaking is Ownable, IUUStaking {
+contract PierStaking is Ownable, IUUStaking {
     using SafeERC20 for IERC20;
     
     mapping(address => UserInfo) public userInfo;
