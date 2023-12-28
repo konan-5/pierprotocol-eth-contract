@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.20;
 
-interface IUUStaking {
+interface IPierStaking {
     struct UserInfo {
         uint256 stakedAmount;
         uint256 rewardDebt;
@@ -21,10 +21,10 @@ interface IUUStaking {
     /// @dev Only owner can call this function.
     function updatePool() external;
 
-    /// @notice Stake amount of $UU token.
+    /// @notice Stake amount of $PIER token.
     function stake(uint256 _amount) external;
 
-    /// @notice Unstake amount of $UU token.
+    /// @notice Unstake amount of $PIER token.
     /// @dev unstake amount should be less than staked amount.
     function unstake(uint256 _amount) external;
 

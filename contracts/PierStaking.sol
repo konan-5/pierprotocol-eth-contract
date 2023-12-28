@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import "./interfaces/IUUStaking.sol";
+import "./interfaces/IPierStaking.sol";
 
-contract PierStaking is Ownable, IUUStaking {
+contract PierStaking is Ownable, IPierStaking {
     using SafeERC20 for IERC20;
     
     mapping(address => UserInfo) public userInfo;
@@ -24,15 +24,15 @@ contract PierStaking is Ownable, IUUStaking {
     address[] userList;
     address[] depositorList;
 
-    IERC20 public immutable uuToken;
+    IERC20 public immutable pierToken;
     
     event Stake(address indexed user, uint256 amount);
     event Unstake(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Claim(address indexed user, uint256 amount);
 
-    constructor(address _uuToken) Ownable(msg.sender) {
-        uuToken = IERC20(_uuToken);
+    constructor(address _pierToken) Ownable(msg.sender) {
+        pierToken = IERC20(_pierToken);
     }
 
     function stake(uint256 _amount) external override {
@@ -55,7 +55,7 @@ contract PierStaking is Ownable, IUUStaking {
         } else {
             uint256 tokensNeeded = _amount - pendingUnstake;
             user.pendingUnstakeAmount = 0;
-            uuToken.safeTransferFrom(msg.sender, address(this), tokensNeeded);
+            pierToken.safeTransferFrom(msg.sender, address(this), tokensNeeded);
         }
         
         user.stakedAmount += _amount;
@@ -114,7 +114,7 @@ contract PierStaking is Ownable, IUUStaking {
         if (toWithdraw == 0) { revert('No pending unstakes'); }
         if (block.timestamp < user.lastUnstakeTime + unstakeDuration) { revert('unstake not ready'); }
         user.pendingUnstakeAmount = 0;
-        uuToken.safeTransfer(msg.sender, toWithdraw);
+        pierToken.safeTransfer(msg.sender, toWithdraw);
         emit Withdraw(msg.sender, toWithdraw);
     }
 
