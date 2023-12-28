@@ -289,8 +289,8 @@ contract UselessMarketplace is Ownable, ReentrancyGuard {
             return (0, 0);
         }
 
-        // 1% fee
-        uint256 totalFee = amount / 100;
+        // 0.3% fee
+        uint256 totalFee = amount * 3 / 1000;
 
         uint256 feeForStaking = totalFee / 2;
         uint256 feeForWallet = totalFee - feeForStaking;
