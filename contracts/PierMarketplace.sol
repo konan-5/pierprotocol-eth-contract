@@ -273,8 +273,8 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
 
     // Internal function to calculate the fee amount for a transaction.
     function _calculateFee(address paymentTokenAddress, address sellTokenAddress, uint256 paymentTokenAmount) internal view returns (uint256) {
-        // Start with a base fee of 3% of the payment token amount.
-        uint256 fee = paymentTokenAmount * 3 / 100;
+        // Start with a base fee of 1% of the payment token amount.
+        uint256 fee = paymentTokenAmount * 1 / 100;
 
         // Apply discount based on the fee rate of the payment token if it's a friend token.
         // This reduces the fee by the percentage specified in the friendTokenFeeList.
