@@ -21,21 +21,34 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         uint256 paymentTokenAmount;     // Amount of payment token required.
         bool isActive;                  // Status of the listing (active/inactive).
     }
+
+    struct BookForEth {
+        address seller;                 // Address of the seller.
+        address sellTokenAddress;       // Address of the token being sold.
+        uint256 sellTokenAmount;        // Amount of the token being sold.
+        uint256 ethAmount;              // Amount of payment token required.
+        bool isActive;                  // Status of the listing (active/inactive).
+    }
     
     // Counter for the total number of book listings.
     uint256 public bookCount = 0;
+    uint256 public bookForEthCount = 0;
 
     // Address to collect fees.
     address public feeWallet;
 
     // Mapping of book listings, identified by a numeric ID.
     mapping(uint256 => Book) public bookList;
+    mapping(uint256 => BookForEth) public bookForEthList;
+
     // Mapping to store fee rates for friend tokens (identified by their address).
     mapping(address => uint8) public friendTokenFeeList;
 
     // Events to emit on various actions.
     event Booked(uint256 indexed bookId, address indexed seller, address indexed sellTokenAddress, uint256 sellTokenAmount, address paymentTokenAddress, uint256 paymentTokenAmount);
+    event BookedForEth(uint256 indexed bookForEthCount, address indexed seller, address sellTokenAddress, uint256 sellTokenAmount, uint256 ethAmount);
     event TokenPurchased(uint256 indexed bookId, address indexed buyer);
+    event TokenPurchasedForEth(uint256 indexed bookForEthId, address indexed buyer);
     event BookRemoved(uint256 indexed bookId);
     event FriendTokenUpdated(address indexed tokenAddress, uint256 indexed feeRate);
     event FeeWalletAddressUpdated(address indexed feeWallet);
@@ -89,14 +102,41 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         emit Booked(bookCount, sender, sellTokenAddress, sellTokenAmount, paymentTokenAddress, paymentTokenAmount);
     }
 
+    function bookForEth(address sellTokenAddress, uint256 sellTokenAmount, uint256 ethAmount) external nonReentrant() {
+        // Validations for the input parameters.
+        if (sellTokenAmount == 0) revert InvalidSellTokenAmount(sellTokenAmount);
+        if (ethAmount == 0) revert InvalidPaymentTokenAmount(ethAmount);
+        if (sellTokenAddress == address(0)) revert InvalidSellTokenAddress(sellTokenAddress);
+
+        // Fetching the sender's address and checking allowance.
+        address sender = msg.sender;
+        uint256 allowance = IERC20(sellTokenAddress).allowance(sender, address(this));
+        require(allowance >= sellTokenAmount, "Marketplace does not have enough allowance to transfer tokens");
+
+        // Incrementing bookForEth count and adding the bookForEth to the listing.
+        bookForEthCount++;
+        bookForEthList[bookForEthCount] = BookForEth(
+            sender,
+            sellTokenAddress,
+            sellTokenAmount,
+            ethAmount,
+            true
+        );
+        
+        // Emitting an event for the book creation.
+        emit BookedForEth(bookForEthCount, sender, sellTokenAddress, sellTokenAmount, ethAmount);
+    }
+
     // Function to buy tokens from a book listing.
     function buyToken(uint256 bookId, uint256 purchasePercent) external nonReentrant {
         // Validation for the purchase percentage.
         if (purchasePercent == 0 || purchasePercent > 100) revert InvalidPurchasePercent(purchasePercent);
 
+        address sender = msg.sender;
+
         // Fetching the book item and validating its existence and activity status.
         Book memory bookItem = bookList[bookId];
-        if (bookItem.paymentTokenAddress == address(0)) revert ListingDoesNotExist(bookId);
+        if (bookItem.sellTokenAddress == address(0)) revert ListingDoesNotExist(bookId);
         if (!bookItem.isActive) revert ListingDoesNotExist(bookId);
 
         // Calculating the amount of tokens and payment to be made.
@@ -104,9 +144,9 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         uint256 sellTokenAmount = bookItem.sellTokenAmount * purchasePercent / 100;
 
         // Checking buyer's allowance and balance for the payment token.
-        uint256 buyerAllowance = IERC20(bookItem.paymentTokenAddress).allowance(msg.sender, address(this));
+        uint256 buyerAllowance = IERC20(bookItem.paymentTokenAddress).allowance(sender, address(this));
         if (buyerAllowance < paymentTokenAmount) revert InsufficientAllowanceOfBuyer(buyerAllowance, paymentTokenAmount);
-        uint256 buyerBalance = IERC20(bookItem.paymentTokenAddress).balanceOf(msg.sender);
+        uint256 buyerBalance = IERC20(bookItem.paymentTokenAddress).balanceOf(sender);
         if (buyerBalance < paymentTokenAmount) revert InsufficientBalanceOfBuyer(buyerBalance, paymentTokenAmount);
 
         // Checking seller's allowance and balance for the sell token.
@@ -124,18 +164,58 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         }
 
         // Executing the token transfers.
-        IERC20(bookItem.sellTokenAddress).safeTransferFrom(bookItem.seller, msg.sender, sellTokenAmount);
+        IERC20(bookItem.sellTokenAddress).safeTransferFrom(bookItem.seller, sender, sellTokenAmount);
 
         // Calculating and transferring the fee.
         uint256 fee = _calculateFee(bookItem.paymentTokenAddress, bookItem.sellTokenAddress, paymentTokenAmount);
-        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(msg.sender, feeWallet, fee);
+        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(sender, feeWallet, fee);
 
         // Transferring the remaining amount to the seller.
         uint256 amountToSeller = paymentTokenAmount - fee;
-        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(msg.sender, bookItem.seller, amountToSeller);
+        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(sender, bookItem.seller, amountToSeller);
 
         // Emitting an event for the token purchase.
-        emit TokenPurchased(bookId, msg.sender);
+        emit TokenPurchased(bookId, sender);
+    }
+    
+    // Function to buy tokens from a book listing.
+    function buyTokenWithEth(uint256 bookForEthId) external payable nonReentrant {
+        uint256 paymentEthAmount = msg.value;
+        address sender = msg.sender;
+
+        // Fetching the book item and validating its existence and activity status.
+        BookForEth memory bookItem = bookForEthList[bookForEthId];
+        if (bookItem.sellTokenAddress == address(0)) revert ListingDoesNotExist(bookForEthId);
+        if (!bookItem.isActive) revert ListingDoesNotExist(bookForEthId);
+
+        // Calculating the amount of tokens and payment to be made.
+        uint256 sellTokenAmount = bookItem.sellTokenAmount * paymentEthAmount / bookItem.ethAmount;
+
+        // Checking seller's allowance and balance for the sell token.
+        uint256 sellerAllowance = IERC20(bookItem.sellTokenAddress).allowance(bookItem.seller, address(this));
+        if (sellerAllowance < sellTokenAmount) revert InsufficientAllowanceOfSeller(sellerAllowance, sellTokenAmount);
+        uint256 sellerBalance = IERC20(bookItem.sellTokenAddress).balanceOf(bookItem.seller);
+        if (sellerBalance < sellTokenAmount) revert InsufficientAmountOfSeller(sellerBalance, sellTokenAmount);
+
+        // Update the book listing status or adjust the remaining amount.
+        bookForEthList[bookForEthId].ethAmount -= paymentEthAmount;
+        bookForEthList[bookForEthId].sellTokenAmount -= sellTokenAmount;
+
+        // Executing the token transfers.
+        IERC20(bookItem.sellTokenAddress).safeTransferFrom(bookItem.seller, sender, sellTokenAmount);
+
+        // Calculating and transferring the fee.
+        uint256 fee = _calculateFee(address(0), bookItem.sellTokenAddress, paymentEthAmount);
+        (bool sent, ) = feeWallet.call{value: fee}("");
+        require(sent, "Failed to send Ether fee");
+
+        // Transferring the remaining amount to the seller.
+        uint256 amountToSeller = paymentEthAmount - fee;
+        (sent, ) = bookItem.seller.call{value: amountToSeller}("");
+        require(sent, "Failed to send Ether amount");
+
+        // Emitting an event for the token purchase.
+        emit TokenPurchasedForEth(bookForEthId, sender);
     }
 
     // Function to remove a book listing.
