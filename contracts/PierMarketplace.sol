@@ -50,6 +50,7 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
     event TokenPurchased(uint256 indexed bookId, address indexed buyer);
     event TokenPurchasedForEth(uint256 indexed bookForEthId, address indexed buyer);
     event BookRemoved(uint256 indexed bookId);
+    event BookForEthRemoved(uint256 indexed bookId);
     event FriendTokenUpdated(address indexed tokenAddress, uint256 indexed feeRate);
     event FeeWalletAddressUpdated(address indexed feeWallet);
 
@@ -230,6 +231,18 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
 
         // Emitting an event for the removal of the book.
         emit BookRemoved(bookId);
+    }
+
+    function removeBookForEth(uint256 bookId) external {
+        BookForEth memory bookItem = bookForEthList[bookId];
+        if (bookItem.sellTokenAddress == address(0)) revert ListingDoesNotExist(bookId);
+        if (msg.sender != bookItem.seller) revert OnlyTheSellerCanRemoveTheBook(bookItem.seller, msg.sender);
+
+        // Deactivating the book listing.
+        bookForEthList[bookId].isActive = false;
+
+        // Emitting an event for the removal of the book.
+        emit BookForEthRemoved(bookId);
     }
 
     // Function to update the fee rate for a specific token (referred to as a "friend token").
