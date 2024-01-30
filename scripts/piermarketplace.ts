@@ -3,11 +3,11 @@ import { ethers } from "hardhat";
 async function main() {
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const unlockTime = currentTimestampInSeconds + 60;
-
+  const feeWallet = "0x304fc982dA58D1290E314F1Dc96C66316fA32638";
   const lockedAmount = ethers.parseEther("0.001");
 
-  const pierMarketplace = await ethers.getContractAt("PierMarketplace", "0x304fc982dA58D1290E314F1Dc96C66316fA32638")
-  const wethAddress = await pierMarketplace.WETH()
+  const pierMarketplace = await ethers.getContractAt("PierMarketplace", feeWallet)
+  const wethAddress = await pierMarketplace.feeWallet()
   console.log(wethAddress)
 }
 
