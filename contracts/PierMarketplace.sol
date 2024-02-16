@@ -47,8 +47,8 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
     // Events to emit on various actions.
     event Booked(uint256 indexed bookId, address indexed seller, address indexed sellTokenAddress, uint256 sellTokenAmount, address paymentTokenAddress, uint256 paymentTokenAmount);
     event BookedForEth(uint256 indexed bookForEthCount, address indexed seller, address sellTokenAddress, uint256 sellTokenAmount, uint256 ethAmount);
-    event TokenPurchased(uint256 indexed bookId, address indexed buyer);
-    event TokenPurchasedForEth(uint256 indexed bookForEthId, address indexed buyer);
+    event TokenPurchased(uint256 indexed bookId, address indexed seller, address indexed buyer, uint256 sellTokenAmount, uint256 paymentTokenAmount);
+    event TokenPurchasedForEth(uint256 indexed bookForEthId, address indexed seller, address indexed buyer, uint256 sellTokenAmount, uint256 paymentEthAmount);
     event BookRemoved(uint256 indexed bookId);
     event BookForEthRemoved(uint256 indexed bookId);
     event FriendTokenUpdated(address indexed tokenAddress, uint256 indexed feeRate);
@@ -150,10 +150,11 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         uint256 buyerBalance = IERC20(bookItem.paymentTokenAddress).balanceOf(sender);
         if (buyerBalance < paymentTokenAmount) revert InsufficientBalanceOfBuyer(buyerBalance, paymentTokenAmount);
 
+        address seller = bookItem.seller;
         // Checking seller's allowance and balance for the sell token.
-        uint256 sellerAllowance = IERC20(bookItem.sellTokenAddress).allowance(bookItem.seller, address(this));
+        uint256 sellerAllowance = IERC20(bookItem.sellTokenAddress).allowance(seller, address(this));
         if (sellerAllowance < sellTokenAmount) revert InsufficientAllowanceOfSeller(sellerAllowance, sellTokenAmount);
-        uint256 sellerBalance = IERC20(bookItem.sellTokenAddress).balanceOf(bookItem.seller);
+        uint256 sellerBalance = IERC20(bookItem.sellTokenAddress).balanceOf(seller);
         if (sellerBalance < sellTokenAmount) revert InsufficientAmountOfSeller(sellerBalance, sellTokenAmount);
 
         // Update the book listing status or adjust the remaining amount.
@@ -165,7 +166,7 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         }
 
         // Executing the token transfers.
-        IERC20(bookItem.sellTokenAddress).safeTransferFrom(bookItem.seller, sender, sellTokenAmount);
+        IERC20(bookItem.sellTokenAddress).safeTransferFrom(seller, sender, sellTokenAmount);
 
         // Calculating and transferring the fee.
         uint256 fee = _calculateFee(bookItem.paymentTokenAddress, bookItem.sellTokenAddress, paymentTokenAmount);
@@ -173,10 +174,10 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
 
         // Transferring the remaining amount to the seller.
         uint256 amountToSeller = paymentTokenAmount - fee;
-        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(sender, bookItem.seller, amountToSeller);
+        IERC20(bookItem.paymentTokenAddress).safeTransferFrom(sender, seller, amountToSeller);
 
         // Emitting an event for the token purchase.
-        emit TokenPurchased(bookId, sender);
+        emit TokenPurchased(bookId, seller, sender, sellTokenAmount, paymentTokenAmount);
     }
     
     // Function to buy tokens from a book listing.
@@ -192,10 +193,11 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         // Calculating the amount of tokens and payment to be made.
         uint256 sellTokenAmount = bookItem.sellTokenAmount * paymentEthAmount / bookItem.ethAmount;
 
+        address seller = bookItem.seller;
         // Checking seller's allowance and balance for the sell token.
-        uint256 sellerAllowance = IERC20(bookItem.sellTokenAddress).allowance(bookItem.seller, address(this));
+        uint256 sellerAllowance = IERC20(bookItem.sellTokenAddress).allowance(seller, address(this));
         if (sellerAllowance < sellTokenAmount) revert InsufficientAllowanceOfSeller(sellerAllowance, sellTokenAmount);
-        uint256 sellerBalance = IERC20(bookItem.sellTokenAddress).balanceOf(bookItem.seller);
+        uint256 sellerBalance = IERC20(bookItem.sellTokenAddress).balanceOf(seller);
         if (sellerBalance < sellTokenAmount) revert InsufficientAmountOfSeller(sellerBalance, sellTokenAmount);
 
         // Update the book listing status or adjust the remaining amount.
@@ -203,7 +205,7 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
         bookForEthList[bookForEthId].sellTokenAmount -= sellTokenAmount;
 
         // Executing the token transfers.
-        IERC20(bookItem.sellTokenAddress).safeTransferFrom(bookItem.seller, sender, sellTokenAmount);
+        IERC20(bookItem.sellTokenAddress).safeTransferFrom(seller, sender, sellTokenAmount);
 
         // Calculating and transferring the fee.
         uint256 fee = _calculateFee(address(0), bookItem.sellTokenAddress, paymentEthAmount);
@@ -212,11 +214,11 @@ contract PierMarketplace is Ownable, ReentrancyGuard {
 
         // Transferring the remaining amount to the seller.
         uint256 amountToSeller = paymentEthAmount - fee;
-        (sent, ) = bookItem.seller.call{value: amountToSeller}("");
+        (sent, ) = seller.call{value: amountToSeller}("");
         require(sent, "Failed to send Ether amount");
 
         // Emitting an event for the token purchase.
-        emit TokenPurchasedForEth(bookForEthId, sender);
+        emit TokenPurchasedForEth(bookForEthId, seller, sender, sellTokenAmount, paymentEthAmount);
     }
 
     // Function to remove a book listing.

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const feeWallet = "0x2338Ba3dB74F217b92dBE82f9bf4685503B24fC9";
+  const feeWallet = "0x2cf82658365E6e175608dcd1AF60B0285e50D909";
   const pierMarketplace = await ethers.deployContract("PierMarketplace", [feeWallet]);
   await pierMarketplace.waitForDeployment();
   console.log(

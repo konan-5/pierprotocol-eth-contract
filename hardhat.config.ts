@@ -16,6 +16,22 @@ const config: HardhatUserConfig = {
     eth: {
       url: "https://rpc.mevblocker.io",
       accounts: [privateKey]
+    },
+    sepolia: {
+      url: "https://ethereum-sepolia.publicnode.com",
+      accounts: [privateKey]
+    },
+    optimismmain: {
+      url: "https://opt-mainnet.g.alchemy.com/v2/nRz4mGrUbXWEm_tTKlIFbxcn3KCqIO17",
+      accounts: [privateKey]
+    },
+    ethereummain: {
+      url: "https://eth-mainnet.g.alchemy.com/v2/xRpnmvup4LCr2mL9lNqqpKnHQJepfeSc",
+      accounts: [privateKey]
+    },
+    basemain: {
+      url: "https://base-mainnet.g.alchemy.com/v2/mWNKTlIEj3AujVAvLytXLenxbEGhlhag",
+      accounts: [privateKey],
     }
   }
 };
