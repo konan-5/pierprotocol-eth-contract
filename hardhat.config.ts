@@ -32,6 +32,22 @@ const config: HardhatUserConfig = {
     basemain: {
       url: "https://base-mainnet.g.alchemy.com/v2/mWNKTlIEj3AujVAvLytXLenxbEGhlhag",
       accounts: [privateKey],
+    },
+    scrollmain: {
+      url: "https://1rpc.io/scroll",
+      accounts: [privateKey],
+    },
+    linea: {
+      url: "https://linea.drpc.org",
+      accounts: [privateKey],
+    },
+    avaxmain: {
+      url: "https://avalanche.drpc.org",
+      accounts: [privateKey]
+    },
+    avaxtest: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      accounts: [privateKey]
     }
   }
 };
